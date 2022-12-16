@@ -22,27 +22,6 @@ struct Cache {
     state: AppState,
 }
 
-
-#[tauri::command]
-async fn sync(state: AppState) -> String {
-    "ok".to_string()
-}
-
-#[tauri::command]
-async fn export(state: AppState) -> String {
-    "ok".to_string()
-}
-
-#[tauri::command]
-async fn backup() -> String {
-    "ok".to_string()
-}
-
-#[tauri::command]
-async fn restore_backups() -> String {
-    "ok".to_string()
-}
-
 fn find_data_dir() -> PathBuf {
     let mut eve_appdata = PathBuf::from(
         std::env::var("LOCALAPPDATA").unwrap())
@@ -104,16 +83,115 @@ async fn get_toons() -> Vec<eve::Toon> {
 }
 
 #[tauri::command]
-async fn get_toon_portrait(id: u64) -> String {
-    let esi = eve::ESI::new();
-    esi.find_toon_portrait(id).await
+async fn sync(state: AppState) -> String {
+    match state {
+        AppState { selected_source: None, .. } => {
+            "No source selected".to_string()
+        }
+        AppState {selected_targets, ..} if selected_targets.len() == 0 => {
+            "No targets selected".to_string()
+        }
+        AppState { selected_source: Some(src_id), selected_targets } => {
+            let data_dir = find_data_dir();
+            let source_path = PathBuf::from(
+                format!("core_char_{}.dat", src_id));
+            let source_path = data_dir.join(source_path);
+            for target_id in &selected_targets {
+                let target_path = PathBuf::from(
+                    format!("core_char_{}.dat", target_id));
+                let target_path = data_dir.join(target_path);
+                std::fs::copy(&source_path, &target_path).unwrap();
+                println!("Copied {:?} to {:?}", source_path, target_path);
+            }
+            format!("Synced {} to {} targets", src_id, selected_targets.len())
+        }
+    }
+}
+
+#[tauri::command]
+async fn export(state: AppState) -> String {
+    match state {
+        AppState { selected_source: None, .. } => {
+            "No source selected".to_string()
+        }
+        AppState { selected_source: Some(src_id), ..} => {
+            let data_dir = find_data_dir();
+            let source_name = PathBuf::from(
+                format!("core_char_{}.dat", src_id));
+            let source_path = data_dir.join(&source_name);
+                
+            use futures::channel::oneshot;
+
+            let (send, recv) = oneshot::channel::<Option<PathBuf>>();
+
+            tauri::api::dialog::FileDialogBuilder::new()
+                .add_filter("character file", &["dat"])
+                .set_file_name("core_char.dat")
+                .save_file(|file| {
+                    send.send(file).unwrap();
+                });
+            let file = recv.await.unwrap();
+            if let Some(file) = file {
+                std::fs::copy(&source_path, &file).unwrap();
+                format!("Exported {:?} to {:?}", source_name, file.to_string_lossy())
+            } else {
+                "Export cancelled".to_string()
+            }
+            
+        }
+    }
+}
+
+#[tauri::command]
+async fn backup() -> String {
+    let data_dir = find_data_dir();
+
+    let re_char_dat = Regex::new(r"core_char_(?P<char_id>\d+).dat").unwrap();
+
+    let mut count = 0;
+    for entry in std::fs::read_dir(&data_dir).unwrap() {
+        let path = &entry.unwrap().path();
+        let name = path.file_name().unwrap().to_str().unwrap();
+        if re_char_dat.is_match(name) {
+            let backup_name = format!("{}.bak", name);
+            let backup_path = data_dir.join(backup_name);
+            std::fs::copy(path, &backup_path).unwrap();
+            println!("Copied {:?} to {:?}", path, backup_path);
+            count += 1;
+        }
+    }
+    format!("Backed up {} character files", count)
+}
+
+#[tauri::command]
+async fn restore_backups() -> String {
+    let data_dir = find_data_dir();
+
+    let re_char_dat = Regex::new(r"core_char_(?P<char_id>\d+).dat").unwrap();
+
+    let mut count = 0;
+    for entry in std::fs::read_dir(&data_dir).unwrap() {
+        let path = &entry.unwrap().path();
+        let name = path.file_name().unwrap().to_str().unwrap();
+        if re_char_dat.is_match(name) {
+            let backup_name = format!("{}.bak", name);
+            let backup_path = data_dir.join(backup_name);
+            if backup_path.exists() {
+                std::fs::copy(&backup_path, path).unwrap();
+                println!("Copied {:?} to {:?}", backup_path, path);
+                count += 1;
+            } else {
+                println!("No backup found for {:?}", path);
+            }
+        }
+    }
+    format!("Restored {} backups", count)
 }
 
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
-            get_toons,
-            get_toon_portrait,
+            get_toons, sync, export, backup, restore_backups
             ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

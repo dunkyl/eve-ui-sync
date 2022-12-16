@@ -4,9 +4,55 @@ async function get_toons() {
   return await invoke("get_toons", { });
 }
 
+async function sync(state) {
+  return await invoke("sync", { state: state });
+}
+
+async function export_(state) {
+  return await invoke("export", { state: state });
+}
+
+async function backup() {
+  return await invoke("backup", { });
+}
+
+async function restore_backups() {
+  return await invoke("restore_backups", { });
+}
+
 let toonsEl = document.getElementById("toons");
 
 let controls = {};
+
+let state = {
+  selected_source: null,
+  selected_targets: []
+};
+
+function readStateFromUI() {
+  let state = { selected_source: null, selected_targets: []};
+  for (let id in controls) {
+    if (controls[id].source.children[0].checked) {
+      state.selected_source = parseInt(id);
+    }
+    else if (controls[id].target.children[0].checked) {
+      state.selected_targets.push(parseInt(id));
+    }
+  }
+  if (state.selected_source == null || state.selected_targets.length == 0) {
+    document.getElementById("sync").disabled = true;
+  } else {
+    document.getElementById("sync").disabled = false;
+  }
+
+  if (state.selected_source == null) {
+    document.getElementById("export_").disabled = true;
+  } else {
+    document.getElementById("export_").disabled = false;
+  }
+
+  return state;
+}
 
 function makeCustomCheckbox(className, checked, disabled) {
   let checkbox = document.createElement("input");
@@ -65,11 +111,13 @@ function makeToonEl(toon) {
         controls[id].target.children[0].disabled = true;
       }
     }
+    state = readStateFromUI();
   }
   checkbox.children[0].onchange = function() {
     if (this.checked) {
       radio.children[0].checked = false;
-    } 
+    }
+    state = readStateFromUI();
   }
 
   row.appendChild(character_cell);
@@ -104,11 +152,40 @@ async function main() {
     if (any_checked) {
       this.innerText = "Select\nAll";
     } else {
-      this.innerText = "Select\nNone";
+      this.innerText = "Deselect\nAll";
     }
     for (let id in controls) {
       controls[id].target.children[0].checked = !any_checked;
     }
+    state = readStateFromUI();
+  }
+
+  document.getElementById("sync").onclick = function() {
+    document.getElementById("status").innerText = "Syncing...";
+    sync(state).then((result) => {
+      document.getElementById("status").innerText = result;
+    });
+  }
+
+  document.getElementById("backup").onclick = function() {
+    document.getElementById("status").innerText = "Backing up...";
+    backup().then((result) => {
+      document.getElementById("status").innerText = result;
+    });
+  }
+
+  document.getElementById("restore-backups").onclick = function() {
+    document.getElementById("status").innerText = "Restoring...";
+    restore_backups().then((result) => {
+      document.getElementById("status").innerText = result;
+    });
+  }
+
+  document.getElementById("export_").onclick = function() {
+    document.getElementById("status").innerText = "Exporting...";
+    export_(state).then((result) => {
+      document.getElementById("status").innerText = result;
+    });
   }
 
 }
