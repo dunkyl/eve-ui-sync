@@ -9,6 +9,7 @@ pub struct ESI {
 pub struct Toon {
     id: u64,
     name: String,
+    portrait_url: String,
 }
 
 
@@ -27,6 +28,7 @@ impl ESI {
         Toon {
             id: id,
             name: json["name"].as_str().unwrap().to_string(),
+            portrait_url: self.find_toon_portrait(id).await,
         }
     }
 

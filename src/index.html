@@ -8,7 +8,30 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div id="toons">
-
+    <div id="controls">
+      <button id="sync" disabled>Sync</button>
+      <button id="export" disabled>Export...</button>
+      <button id="export">Backup</button>
+      <button id="export" disabled>Restore Backups</button>
     </div>
+    <table>
+      <tbody id="toons">
+        <tr>
+          <th>Character</th>
+          <th>Source</th>
+          <th>
+            <span>Target</span>
+          </th>
+        </tr>
+        
+      </tbody>
+      <tr id="last-row">
+        <td></td>
+        <td></td>
+        <td>
+          <button id="toggle-all">Select<br/>All</button>
+        </td>
+      </tr>
+      
+    </table>
 </html>

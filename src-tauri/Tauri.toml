@@ -9,9 +9,9 @@ distDir = "../src"
 
 [[tauri.windows]]
 fullscreen = false
-width = 800
-height = 600
+width = 1200
+height = 900
 resizable = true
-title = "eve-ui-sync"
+title = "EVE UI Sync 0.0.1"
 
 
