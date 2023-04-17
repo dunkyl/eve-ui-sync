@@ -11,7 +11,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Product
             Id="*"
-            Name="eve-ui-sync"
+            Name="EVE UI Sync"
             UpgradeCode="83da6212-3b8b-55d3-a20d-1a5627fef74b"
             Language="1033"
             Manufacturer="Dunkyl 🔣🔣"
@@ -77,7 +77,7 @@
         <Directory Id="TARGETDIR" Name="SourceDir">
             <Directory Id="DesktopFolder" Name="Desktop">
                 <Component Id="ApplicationShortcutDesktop" Guid="*">
-                    <Shortcut Id="ApplicationDesktopShortcut" Name="eve-ui-sync" Description="Runs eve-ui-sync" Target="[!Path]" WorkingDirectory="INSTALLDIR" />
+                    <Shortcut Id="ApplicationDesktopShortcut" Name="EVE UI Sync" Description="Runs EVE UI Sync" Target="[!Path]" WorkingDirectory="INSTALLDIR" />
                     <RemoveFolder Id="DesktopFolder" On="uninstall" />
                     <RegistryValue Root="HKCU" Key="Software\Dunkyl\eve-ui-sync" Name="Desktop Shortcut" Type="integer" Value="1" KeyPath="yes" />
                 </Component>
