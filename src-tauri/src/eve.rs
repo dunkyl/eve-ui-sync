@@ -26,7 +26,7 @@ impl ESI {
         let response = self.client.get(url).send().await.unwrap();
         let json: serde_json::Value = response.json().await.unwrap();
         Toon {
-            id: id,
+            id,
             name: json["name"].as_str().unwrap().to_string(),
             portrait_url: self.find_toon_portrait(id).await,
         }

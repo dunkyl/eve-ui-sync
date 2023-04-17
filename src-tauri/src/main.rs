@@ -189,7 +189,7 @@ async fn export(state: AppState) -> String {
 async fn backup() -> String {
     let data_dir = find_data_dir();
 
-    let re_char_dat = Regex::new(r"core_char_(?P<char_id>\d+).dat").unwrap();
+    let re_char_dat = Regex::new(r"^core_char_(?P<char_id>\d+).dat$").unwrap();
 
     let mut count = 0;
     for entry in std::fs::read_dir(&data_dir).unwrap() {
@@ -210,7 +210,7 @@ async fn backup() -> String {
 async fn restore_backups() -> String {
     let data_dir = find_data_dir();
 
-    let re_char_dat = Regex::new(r"core_char_(?P<char_id>\d+).dat").unwrap();
+    let re_char_dat = Regex::new(r"^core_char_(?P<char_id>\d+).dat$").unwrap();
 
     let mut count = 0;
     for entry in std::fs::read_dir(&data_dir).unwrap() {

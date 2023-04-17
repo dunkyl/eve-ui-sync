@@ -1,33 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EVE UI Sync</title>
     <script type="module" src="/main.js" defer></script>
     <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <p>Select a character and click sync to copy data to other characters.</p>
+</head>
+<body>
+    
     <main>
+        <p>Select a source character and click sync to copy data to the target characters.</p>
+        <div id="controls">
+            <button id="sync" disabled>Sync</button>
+            <button id="export_" disabled>Export...</button>
+            <button id="backup">Backup</button>
+            <button id="restore-backups">Restore Backups</button>
+        </div>
         
-      <div id="controls">
-        <button id="sync" disabled>Sync</button>
-        <button id="export_" disabled>Export...</button>
-        <button id="backup">Backup</button>
-        <button id="restore-backups">Restore Backups</button>
-      </div>
-
-      <div id="toons">
-          <div class="header">Character</div>
-          <div class="header">Source</div>
-          <div class="header">Target</div>
-      </div>
-
-      <button id="toggle-all">Select All</button>
-
-      <div id="status"></div>
-
+        <div id="toons">
+            <div class="header">Character</div>
+            <div class="header">Source</div>
+            <div class="header">Target</div>
+            <div id="loading">Loading characters...</div>
+        </div>
+        
+        <button id="toggle-all">Select All</button>
+        
+        <div id="status"></div>
+        
     </main>
-  </body>
+</body>
 </html>

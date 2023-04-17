@@ -72,13 +72,13 @@ function readStateFromUI() {
   } else {
     document.getElementById("sync").disabled = false;
   }
-
+  
   if (state.selected_source == null) {
     document.getElementById("export_").disabled = true;
   } else {
     document.getElementById("export_").disabled = false;
   }
-
+  
   return state;
 }
 
@@ -116,14 +116,14 @@ function updateDelays(cache) {
     let delay_amount = (distance+1) * DELAY_AMOUNT + "s";
     let cs = toon_rows[toon.id]
     let style = `--delay: ${delay_amount};`
-
+    
     let end_delay_amount = (distance + 2) * DELAY_AMOUNT + "s";
     if (distance == 0) {
       end_delay_amount = "0s";
     }
-
+    
     let end_style = `--delay: ${end_delay_amount};`
-
+    
     let arrowEnd = toon_rows[toon.id][cs.length-2];
     let arrowPath = toon_rows[toon.id][cs.length-1];
     
@@ -138,7 +138,7 @@ function updateDelays(cache) {
     arrowPath.getAnimations().map(get_lowest);
     arrowEnd.getAnimations().map(get_lowest);
   }
-
+  
   // sync animations
   for (let toon of cache.toons) {
     let cs = toon_rows[toon.id]
@@ -183,11 +183,11 @@ function makeToonEls(toon, cache) {
   name.className = "character-name";
   character_cell.appendChild(name);
   character_cell.className = "toon";
-
+  
   let radio = makeCustomRadio("source-radio", false, false, "toon", toon.id);
   
   let checkbox = makeCustomCheckbox("target-checkbox", false, false);
-
+  
   radio.children[0].onchange = function() {
     for (let id in controls) {
       if (id != toon.id) {
@@ -211,42 +211,44 @@ function makeToonEls(toon, cache) {
     updateDelays(cache);
     updateToggleAllText();
   }
-
+  
   row.push(character_cell);
   row.push(radio);
   row.push(checkbox);
-
+  
   let arrow_cell = document.createElement("div");
   arrow_cell.className = "arrow arrow-end";
   row.push(arrow_cell);
-
+  
   let path_cell = document.createElement("div");
   path_cell.className = "arrow arrow-path";
   row.push(path_cell);
-
+  
   controls[toon.id] = {
     source: radio,
     target: checkbox
   }
-
+  
   toon_rows[toon.id] = row;
-
+  
   return row;
 }
 
 
 async function main() {
-
+  
   let cache = await get_toons();
-
+  
+  document.getElementById("loading").style.display = "none";
+  
   let toons = cache.toons;
-
+  
   for (let toon of toons) {
     for (let el of makeToonEls(toon, cache)) {
       toonsEl.appendChild(el);
     }
   }
-
+  
   if (cache.state.selected_source != null) {
     controls[cache.state.selected_source].source.children[0].checked = true;
   }
@@ -256,7 +258,7 @@ async function main() {
   state = readStateFromUI();
   updateDelays(cache);
   updateToggleAllText();
-
+  
   document.getElementById("toggle-all").onclick = function() {
     let any_checked = updateToggleAllText();
     
@@ -266,35 +268,35 @@ async function main() {
     state = readStateFromUI();
     updateToggleAllText();
   }
-
+  
   document.getElementById("sync").onclick = function() {
     document.getElementById("status").innerText = "Syncing...";
     sync(state).then((result) => {
       document.getElementById("status").innerText = result;
     });
   }
-
+  
   document.getElementById("backup").onclick = function() {
     document.getElementById("status").innerText = "Backing up...";
     backup().then((result) => {
       document.getElementById("status").innerText = result;
     });
   }
-
+  
   document.getElementById("restore-backups").onclick = function() {
     document.getElementById("status").innerText = "Restoring...";
     restore_backups().then((result) => {
       document.getElementById("status").innerText = result;
     });
   }
-
+  
   document.getElementById("export_").onclick = function() {
     document.getElementById("status").innerText = "Exporting...";
     export_(state).then((result) => {
       document.getElementById("status").innerText = result;
     });
   }
-
+  
 }
 
 window.onload = main;
