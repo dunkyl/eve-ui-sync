@@ -150,9 +150,9 @@ async function main() {
       }
     }
     if (any_checked) {
-      this.innerText = "Select\nAll";
+      this.innerText = "Select All";
     } else {
-      this.innerText = "Deselect\nAll";
+      this.innerText = "Deselect All";
     }
     for (let id in controls) {
       controls[id].target.children[0].checked = !any_checked;

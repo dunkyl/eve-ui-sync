@@ -8,6 +8,12 @@ html {
   font-size: 14pt;
   background-color: black;
   color: white;
+  --color-bg: black;
+  --color-normal: #438190;
+  --color-hover: #6bc1d6;
+  --color-hover-h: #6bc1d680;
+  --color-active: #8dddf1;
+  --color-active-h: #8dddf180;
 }
 
 main {
@@ -21,8 +27,8 @@ main {
   flex-direction: row;
 }
 
-td {
-  min-width: 3em;
+td:first-child {
+  min-width: 2em;
   height: 100%;
   border: 1px solid aliceblue;
 }
@@ -44,25 +50,21 @@ td {
 }
 
 button {
-  background-color: rgb(55, 70, 75);
+  background-color: #43819080;
   color: rgb(223, 252, 252);
-  border: 1px solid aliceblue;
+  border: 2px solid var(--color-normal);
   padding: 0.5em;
   margin: 0.5em;
-  transition: background-color 0.5s, color 0.9s, box-shadow 1s;
+  transition: 0.2s;
 }
 
 button:hover {
-  background-color: rgb(223, 252, 252);
-  color: rgb(55, 70, 75);
-  box-shadow: turquoise 0 0 1em;
+  border: 2px solid var(--color-hover);
+  box-shadow: inset 0 0 1em 0 var(--color-hover);
 }
 
 button:active {
-  background-color: rgb(55, 70, 75);
-  color: rgb(223, 252, 252);
-  box-shadow: turquoise 0 0 1em;
-  transition: background-color 0.05s, color 0.09s, box-shadow 0.1s;
+  border: 2px solid var(--color-active);
 }
 
 button:disabled {
@@ -72,7 +74,8 @@ button:disabled {
 td.options {
   text-align: center;
   vertical-align: middle;
-  width: 5em;
+  --size: 1.7em;
+  min-width: 5em;
 }
 
 #last-row > td {
@@ -82,57 +85,80 @@ td.options {
 }
 
 #toggle-all {
-  width: 90%;
-  margin: 5px;
+  /* width: 90%; */
+  /* margin: 5px; */
+  min-width: 7em;
+  min-height: 3em;
 }
 
 .custom-checkbox, .custom-radio {
-  position: relative;
-  width: 5em;
-  height: 1.5em;
+  /* position: relative; */
+  /* width: 2em;
+  height: 1.5em; */
+  /* text-align: center; */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .custom-checkbox > input, .custom-radio > input {
-  opacity: 0.1;
+  appearance: none;
+  opacity: 1;
   cursor: pointer;
-  width: 2em;
-  height: 2em;
-  position: absolute;
-  left: 2.25em;
-  top: 0em;
+  width: var(--size);
+  height: var(--size);
+
+  content: "";
+  display: block;
+  border: 2px solid var(--color-normal);
+
+  transition: 0.2s;
+  
 }
 
-.custom-checkbox::before, .custom-radio::before {
-  content: " ";
-  display: inline-block;
-  position: absolute;
-  width: 1em;
-  height: 1em;
-  border: 2px solid aliceblue;
-  left: 2em;
-  top: 0.1em;
-}
-
-.custom-checkbox:has(input:checked)::before {
-  background-image: url("assets/javascript.svg");
-  background-size: 100% 100%;
-  background-color: rgb(55, 70, 75);
-}
-
-.custom-checkbox:has(input:disabled)::before {
-  opacity: 0.5;
-}
-
-.custom-radio::before {
+.custom-radio > input {
   border-radius: 50%;
 }
 
-.custom-radio:has(input:checked)::before {
-  background-image: url("assets/tauri.svg");
-  background-size: 100% 100%;
-  background-color: rgb(55, 70, 75);
+.custom-radio > input:hover {
+  box-shadow: 0 0 0.2em 0.0em var(--color-hover);
+  border: 2px solid var(--color-hover);
 }
 
-.custom-radio:has(input:disabled)::before {
+.custom-radio > input:checked {
+  box-shadow: inset 0 0 0 0.3em var(--color-bg), 0 0 0.2em 0.1em var(--color-active-h);
+  border: 2px solid var(--color-active);
+  background-color: var(--color-active);
+}
+
+.custom-radio > input:checked:hover {
+  box-shadow: inset 0 0 0 0.3em var(--color-bg), 0 0 0.3em 0.2em var(--color-active-h);
+}
+
+.custom-checkbox > input {
+  border-radius: 0.4em;
+}
+
+.custom-checkbox > input:hover {
+  box-shadow: 0 0 0.2em 0.0em var(--color-hover);
+  border: 2px solid var(--color-hover);
+}
+
+.custom-checkbox > input:checked {
+  box-shadow: inset 0 0 0 0.3em var(--color-bg), 0 0 0.2em 0.1em var(--color-active-h);
+  border: 2px solid var(--color-active);
+  background-color: var(--color-active);
+}
+
+.custom-checkbox > input:checked:hover {
+  box-shadow: inset 0 0 0 0.3em var(--color-bg), 0 0 0.3em 0.2em var(--color-active-h);
+}
+
+
+.custom-checkbox:has(input:disabled) {
+  opacity: 0.5;
+}
+
+.custom-radio:has(input:disabled) {
   opacity: 0.5;
 }

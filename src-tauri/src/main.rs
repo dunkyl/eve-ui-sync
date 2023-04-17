@@ -53,7 +53,7 @@ async fn get_eve_chardata() -> Vec<eve::Toon> {
     } else {
         let data_dir = find_data_dir();
 
-        let re_char_dat = Regex::new(r"core_char_(?P<char_id>\d+).dat").unwrap();
+        let re_char_dat = Regex::new(r"^core_char_(?P<char_id>\d+).dat$").unwrap();
         let esi = eve::ESI::new();
 
         let mut toon_tasks = vec![];

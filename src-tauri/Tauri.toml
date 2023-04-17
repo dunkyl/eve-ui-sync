@@ -14,4 +14,23 @@ height = 900
 resizable = true
 title = "EVE UI Sync 0.0.1"
 
+[tauri.bundle]
+active = true
+identifier = "net.dunkyl.eve-ui-sync"
+publisher = "Dunkyl 🔣🔣"
+targets = ["msi"] # dmg,
+icon = ["icons/icon.ico"]
 
+
+[tauri.bundle.windows.wix]
+template = "main.wxs"
+language = { en-US = { localePath = "locale.wxl" } }
+
+[tauri.allowlist.path]
+all = true
+
+[tauri.allowlist.fs]
+all = true
+
+[tauri.allowlist.http]
+all = true
