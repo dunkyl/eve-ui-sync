@@ -23,4 +23,4 @@ The 'Backup' button will immediately create a backup of the current state of all
 
 ## Screenshot
 
-![Screenshot](https://raw.githubusercontent.com/dunkyl/eve-ui-sync/master/screenshot.png)
+![Screenshot](https://i.imgur.com/Fe5xh92.png)
