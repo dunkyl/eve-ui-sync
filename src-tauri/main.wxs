@@ -97,7 +97,7 @@
                 </RegistryKey>
             </Component>
             <Component Id="Path" Guid="d6096b05-d8ff-55cf-a1c4-e74d1a730eb5" Win64="$(var.Win64)">
-                <File Id="Path" Source="C:\Users\dunkyl\source\repos\eve-ui-sync\src-tauri\target\release\eve-ui-sync.exe" KeyPath="yes" Checksum="yes"/>
+                <File Id="Path" Source="C:\Users\dunkyl\source\repos\eve-ui-sync\src-tauri\target\release\EVE UI Sync.exe" KeyPath="yes" Checksum="yes"/>
             </Component>
             
             <Component Id="CMP_UninstallShortcut" Guid="*">
