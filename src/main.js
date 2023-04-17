@@ -8,6 +8,10 @@ async function sync(state) {
   return await invoke("sync", { state: state });
 }
 
+async function update_cache(cache) {
+  return await invoke("update_cache", { cache: cache });
+}
+
 async function export_(state) {
   return await invoke("export", { state: state });
 }
@@ -24,10 +28,34 @@ let toonsEl = document.getElementById("toons");
 
 let controls = {};
 
+let toon_rows = {};
+
 let state = {
   selected_source: null,
   selected_targets: []
 };
+
+function distance_from_source(id) {
+  if (state.selected_source == null) {
+    return null;
+  }
+  if (state.selected_source == id) {
+    return 0;
+  }
+  let position_src;
+  let position_target;
+  let p = 0;
+  for (let other_id in controls) {
+    if (other_id == state.selected_source) {
+      position_src = p;
+    }
+    if (other_id == id) {
+      position_target = p;
+    }
+    p++;
+  }
+  return Math.abs(position_src - position_target);
+}
 
 function readStateFromUI() {
   let state = { selected_source: null, selected_targets: []};
@@ -79,11 +107,73 @@ function makeCustomRadio(className, checked, disabled, name, value) {
   container.appendChild(radio);
   return container;
 }
+const DELAY_AMOUNT = 0.4;
+function updateDelays(cache) {
+  let minStartTime = Infinity;
+  
+  for (let toon of cache.toons) {
+    let distance = distance_from_source(toon.id);
+    let delay_amount = (distance+1) * DELAY_AMOUNT + "s";
+    let cs = toon_rows[toon.id]
+    let style = `--delay: ${delay_amount};`
+
+    let end_delay_amount = (distance + 2) * DELAY_AMOUNT + "s";
+    if (distance == 0) {
+      end_delay_amount = "0s";
+    }
+
+    let end_style = `--delay: ${end_delay_amount};`
+
+    let arrowEnd = toon_rows[toon.id][cs.length-2];
+    let arrowPath = toon_rows[toon.id][cs.length-1];
+    
+    arrowPath.setAttribute("style", style);
+    arrowEnd.setAttribute("style", end_style);
+    
+    let get_lowest = (a) => {
+      if (a.startTime != null && a.startTime < minStartTime) {
+        minStartTime = a.startTime;
+      }
+    };
+    arrowPath.getAnimations().map(get_lowest);
+    arrowEnd.getAnimations().map(get_lowest);
+  }
+
+  // sync animations
+  for (let toon of cache.toons) {
+    let cs = toon_rows[toon.id]
+    let arrowEnd = toon_rows[toon.id][cs.length-1];
+    let arrowPath = toon_rows[toon.id][cs.length-2];
+    if (minStartTime == Infinity || minStartTime == -Infinity || !minStartTime) {
+      break;
+    }
+    arrowPath.getAnimations().map((a) => { a.startTime = minStartTime ; });
+    arrowEnd.getAnimations().map((a) => { a.startTime = minStartTime ; });
+  }
+}
+
+function updateToggleAllText() {
+  let toggle = document.getElementById("toggle-all");
+  let any_checked = false;
+  for (let id in controls) {
+    if (controls[id].target.children[0].checked) {
+      any_checked = true;
+      break;
+    }
+  }
+  if (!any_checked) {
+    toggle.innerText = "Select All";
+  }
+  else {
+    toggle.innerText = "Deselect All";
+  }
+  return any_checked;
+}
 
 
-function makeToonEl(toon) {
-  let row = document.createElement("tr");
-  let character_cell = document.createElement("td");
+function makeToonEls(toon, cache) {
+  let row = [];
+  let character_cell = document.createElement("div");
   let portrait = document.createElement("img");
   portrait.src = toon.portrait_url;
   portrait.className = "portrait";
@@ -93,15 +183,10 @@ function makeToonEl(toon) {
   name.className = "character-name";
   character_cell.appendChild(name);
   character_cell.className = "toon";
-  let options_cell = document.createElement("td");
-  options_cell.className = "options";
-  let radio = makeCustomRadio("custom-radio", false, false, "toon", toon.id);
-  options_cell.appendChild(radio);
+
+  let radio = makeCustomRadio("source-radio", false, false, "toon", toon.id);
   
-  let checkbox = makeCustomCheckbox("custom-checkbox", false, false);
-  let options_cell2 = document.createElement("td");
-  options_cell2.appendChild(checkbox);
-  options_cell2.className = "options";
+  let checkbox = makeCustomCheckbox("target-checkbox", false, false);
 
   radio.children[0].onchange = function() {
     for (let id in controls) {
@@ -112,52 +197,74 @@ function makeToonEl(toon) {
       }
     }
     state = readStateFromUI();
+    cache.state = state;
+    update_cache(cache);
+    updateDelays(cache);
   }
   checkbox.children[0].onchange = function() {
     if (this.checked) {
       radio.children[0].checked = false;
     }
     state = readStateFromUI();
+    cache.state = state;
+    update_cache(cache);
+    updateDelays(cache);
+    updateToggleAllText();
   }
 
-  row.appendChild(character_cell);
-  row.appendChild(options_cell);
-  row.appendChild(options_cell2);
+  row.push(character_cell);
+  row.push(radio);
+  row.push(checkbox);
+
+  let arrow_cell = document.createElement("div");
+  arrow_cell.className = "arrow arrow-end";
+  row.push(arrow_cell);
+
+  let path_cell = document.createElement("div");
+  path_cell.className = "arrow arrow-path";
+  row.push(path_cell);
 
   controls[toon.id] = {
     source: radio,
     target: checkbox
   }
 
+  toon_rows[toon.id] = row;
+
   return row;
 }
 
+
 async function main() {
 
-  let toons = await get_toons();
+  let cache = await get_toons();
+
+  let toons = cache.toons;
 
   for (let toon of toons) {
-    toonsEl.appendChild(makeToonEl(toon));
+    for (let el of makeToonEls(toon, cache)) {
+      toonsEl.appendChild(el);
+    }
   }
 
+  if (cache.state.selected_source != null) {
+    controls[cache.state.selected_source].source.children[0].checked = true;
+  }
+  for (let id of cache.state.selected_targets) {
+    controls[id].target.children[0].checked = true;
+  }
+  state = readStateFromUI();
+  updateDelays(cache);
+  updateToggleAllText();
+
   document.getElementById("toggle-all").onclick = function() {
-    var any_checked = false;
-    for (let id in controls) {
-      if (controls[id].target.children[0].checked) {
-        console.log(`${id} was checked`);
-        any_checked = true;
-        break;
-      }
-    }
-    if (any_checked) {
-      this.innerText = "Select All";
-    } else {
-      this.innerText = "Deselect All";
-    }
+    let any_checked = updateToggleAllText();
+    
     for (let id in controls) {
       controls[id].target.children[0].checked = !any_checked;
     }
     state = readStateFromUI();
+    updateToggleAllText();
   }
 
   document.getElementById("sync").onclick = function() {

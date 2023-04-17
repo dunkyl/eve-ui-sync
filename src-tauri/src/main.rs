@@ -18,68 +18,104 @@ struct AppState {
 
 #[derive(Serialize, Deserialize, Debug)]
 struct Cache {
+    ids: Vec<u64>,
     toons: Vec<eve::Toon>,
     state: AppState,
 }
 
 fn find_data_dir() -> PathBuf {
-    let mut eve_appdata = PathBuf::from(
+    let mut eve_folder = PathBuf::from(
         std::env::var("LOCALAPPDATA").unwrap())
         .join("CCP").join("EVE");
 
-    println!("EVE appdata: {:?}", eve_appdata);
+    println!("EVE data: {:?}", eve_folder);
 
-    if !eve_appdata.exists() {
-        panic!("EVE appdata directory not found");
+    if !eve_folder.exists() {
+        panic!("EVE data directory not found");
     }
-    let install_folders = std::fs::read_dir(eve_appdata.clone()).unwrap();
+    let install_folders = std::fs::read_dir(eve_folder.clone()).unwrap();
     for install_folder in install_folders {
         let install_folder = install_folder.unwrap();
         let install_folder_name = install_folder.file_name();
         if install_folder_name.to_str().unwrap().ends_with("tq_tranquility") {
-            eve_appdata.push(install_folder_name);
+            eve_folder.push(install_folder_name);
             break;
         }
     }
-    eve_appdata.join("settings_Default")
+    eve_folder.join("settings_Default")
 }
 
-async fn get_eve_chardata() -> Vec<eve::Toon> {
-    let cachefile = PathBuf::from("cache.json");
-    if cachefile.exists() {
-        let file = std::fs::File::open(cachefile).unwrap();
-        let reader = std::io::BufReader::new(file);
-        serde_json::from_reader(reader).unwrap()
-    } else {
-        let data_dir = find_data_dir();
-
-        let re_char_dat = Regex::new(r"^core_char_(?P<char_id>\d+).dat$").unwrap();
-        let esi = eve::ESI::new();
-
-        let mut toon_tasks = vec![];
-        for entry in std::fs::read_dir(data_dir).unwrap() {
-            let path = &entry.unwrap().path();
-            let name = path.file_name().unwrap().to_str().unwrap();
-            if let Some(captures) = re_char_dat.captures(name) {
-                let id = captures["char_id"].parse::<u64>().unwrap();
-                toon_tasks.push(esi.find_toon(id));
+fn get_eve_char_ids() -> Vec<u64> {
+    let data_dir = find_data_dir();
+    let re_char_dat = Regex::new(r"^core_char_(?P<char_id>\d+).dat$").unwrap();
+    let mut ids = vec![];
+    for entry in std::fs::read_dir(data_dir).unwrap() {
+        let path = &entry.unwrap().path();
+        let name = path.file_name().unwrap().to_str().unwrap();
+        if let Some(captures) = re_char_dat.captures(name) {
+            let id = captures["char_id"].parse::<u64>().unwrap();
+            if !ids.contains(&id) {
+                ids.push(id);
             }
         }
-
-        let mut toons = futures::future::join_all(toon_tasks).await;
-        toons.sort();
-
-        // save cache
-        let file = std::fs::File::create(cachefile).unwrap();
-        let writer = std::io::BufWriter::new(file);
-        serde_json::to_writer(writer, &toons).unwrap();
-        toons
     }
+    ids
+}
+
+fn cache_path() -> PathBuf {
+    let mut cache_path = find_data_dir();
+    cache_path.push("eve_ui_sync_cache.json");
+    cache_path
+}
+
+async fn load_data() -> Cache {
+    let cache_path = cache_path();
+    let ids = get_eve_char_ids();
+    if cache_path.exists() {
+        let file = std::fs::File::open(&cache_path).unwrap();
+        let reader = std::io::BufReader::new(file);
+        let cache  = serde_json::from_reader::<_, Cache>(reader).unwrap();
+        if cache.ids == ids { // cache is valid
+            println!("Valid cache from {:?}", cache_path);
+            return cache;
+        }
+    }
+    let esi = eve::ESI::new();
+
+    let ids = get_eve_char_ids();
+
+    let toon_tasks = ids.iter().cloned().map(|id| esi.find_toon(id));
+
+    let mut toons = futures::future::join_all(toon_tasks).await;
+    toons.sort();
+
+    let state = AppState {
+        selected_source: None,
+        selected_targets: vec![],
+    };
+
+    let cache = Cache {
+        ids,
+        toons,
+        state,
+    };
+
+    // save cache
+    save_cache(&cache);
+    cache
+}
+
+fn save_cache(cache: &Cache) {
+    let cache_path = cache_path();
+    let file = std::fs::File::create(&cache_path).unwrap();
+    let writer = std::io::BufWriter::new(file);
+    serde_json::to_writer(writer, &cache).unwrap();
+    println!("Saved cache to {:?}", cache_path);
 }
 
 #[tauri::command]
-async fn get_toons() -> Vec<eve::Toon> {
-    get_eve_chardata().await
+async fn get_toons() -> Cache {
+    load_data().await
 }
 
 #[tauri::command]
@@ -88,7 +124,7 @@ async fn sync(state: AppState) -> String {
         AppState { selected_source: None, .. } => {
             "No source selected".to_string()
         }
-        AppState {selected_targets, ..} if selected_targets.len() == 0 => {
+        AppState {selected_targets, ..} if selected_targets.is_empty() => {
             "No targets selected".to_string()
         }
         AppState { selected_source: Some(src_id), selected_targets } => {
@@ -107,6 +143,13 @@ async fn sync(state: AppState) -> String {
         }
     }
 }
+
+#[tauri::command]
+async fn update_cache(cache: Cache) {
+    println!("Updating cache");
+    save_cache(&cache);
+}
+
 
 #[tauri::command]
 async fn export(state: AppState) -> String {
@@ -191,7 +234,7 @@ async fn restore_backups() -> String {
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
-            get_toons, sync, export, backup, restore_backups
+            get_toons, sync, export, backup, restore_backups, update_cache
             ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -10,33 +10,24 @@
   <body>
     <p>Select a character and click sync to copy data to other characters.</p>
     <main>
+        
       <div id="controls">
         <button id="sync" disabled>Sync</button>
         <button id="export_" disabled>Export...</button>
         <button id="backup">Backup</button>
         <button id="restore-backups">Restore Backups</button>
-        
       </div>
-      <table>
-        <tbody id="toons">
-          <tr>
-            <th>Character</th>
-            <th>Source</th>
-            <th>
-              <span>Target</span>
-            </th>
-          </tr>
-        </tbody>
-        <tr id="last-row">
-          <td></td>
-          <td></td>
-          <td>
-            <button id="toggle-all">Select All</button>
-          </td>
-        </tr>
-        
-      </table>
+
+      <div id="toons">
+          <div class="header">Character</div>
+          <div class="header">Source</div>
+          <div class="header">Target</div>
+      </div>
+
+      <button id="toggle-all">Select All</button>
+
       <div id="status"></div>
+
     </main>
   </body>
 </html>

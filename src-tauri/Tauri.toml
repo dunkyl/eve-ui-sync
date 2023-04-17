@@ -1,5 +1,5 @@
 [package]
-productName = "eve-ui-sync"
+productName = "EVE UI Sync"
 version = "0.0.1"
 
 [build]
